@@ -1,0 +1,8 @@
+(function(root,factory){if(typeof module==='object')module.exports=factory();else root.splitConversation=factory();})(typeof globalThis!=='undefined'?globalThis:this,()=>function(text,tokens){
+ const lines=text.split('\n'),events=[];
+ for(let i=0;i<tokens.length;i++){const t=tokens[i];if(['heading_open','paragraph_open'].includes(t.type)&&t.level===0&&t.map){const label=(tokens[i+1]?.content||'').replace(/\*|_/g,'').trim();if(t.type==='paragraph_open'&&!/[:：]$/.test(label))continue;const role=/^(Prompt|User|用户|提问|我的问题)\s*[:：]?$/i.test(label)?'user':/^(Response|Assistant|ChatGPT|GPT|助手|回答)\s*[:：]?$/i.test(label)?'assistant':null;if(role)events.push({start:t.map[0],body:t.map[1],role});}}
+ if(!events.length){for(const t of tokens){if(t.type!=='blockquote_open'||t.level!==0||!t.map)continue;const [start,end]=t.map,body=lines.slice(start,end).join('\n');const after=lines.slice(end,end+4).join('\n');const explicit=/^>\s*(用户|User|我|提问)\s*[:：]/i.test(body);const codex=/^\s*<details>\s*<summary>\s*\d+ previous messages/i.test(after);const initial=events.length===0&&lines.slice(0,start).every(l=>!l.trim()||/^#\s/.test(l));if(explicit||codex||initial){events.push({start,body:start,role:'user',quoted:true});events.push({start:end,body:end,role:'assistant'});}}}
+ if(!events.length)return [{role:'document',markdown:text}];events.sort((a,b)=>a.start-b.start);
+ const out=[];if(events[0].start>0){const intro=lines.slice(0,events[0].start).join('\n');if(intro.trim())out.push({role:'context',markdown:intro});}
+ for(let i=0;i<events.length;i++){const e=events[i];let body=lines.slice(e.body,events[i+1]?.start??lines.length).join('\n');if(e.quoted)body=body.replace(/^> ?/gm,'');if(body.trim())out.push({role:e.role,markdown:body});}return out;
+});

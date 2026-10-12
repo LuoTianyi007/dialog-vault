@@ -1,0 +1,16 @@
+node_modules/
+vendor/
+dist/
+work/
+*data*/
+*.vault
+*.vault.*
+*.zip
+*.tmp
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+Desktop.ini

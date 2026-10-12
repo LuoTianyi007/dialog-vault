@@ -1,0 +1,3 @@
+const {contextBridge,ipcRenderer}=require('electron');
+const names=['status','setup','unlock','list','record','clipboard','pick','preview','import','update','local','lock','activity','backup','restore','password','export','exportZip','categories','category','devices','discover','connect','forget','syncInfo','syncStart','syncStop','sync'];
+contextBridge.exposeInMainWorld('vault',Object.fromEntries([...names.map(n=>[n,async arg=>{const r=await ipcRenderer.invoke('vault:'+n,arg);if(r.error)throw Error(r.error);return r.value;}]),['on',(name,fn)=>{if(['locked','changed','sync-stopped','devices-changed'].includes(name))ipcRenderer.on(name,(_e,data)=>fn(data));}]]));
